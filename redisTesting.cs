@@ -11,11 +11,11 @@ class Program
 {
     private static readonly string RedisConnectionString = "10.43.5.237";
 	
-    private static readonly int AllClientCount = 600;
-	private static readonly int WriteClientCount = 500;
-	private static readonly int ReadClientCount = 100;
-    private static readonly int DataPointsPerSecond = 20;
-    private static readonly int DataPointSize = 100; // 1ch = 2 byte
+    private static  int AllClientCount;
+	private static  int WriteClientCount;
+	private static  int ReadClientCount;
+    private static  int DataPointsPerSecond;
+    private static  int DataPointSize; // char length 1ch = 2 byte
 	private static readonly object counterLock = new object();
 	private static readonly string KeyFilePath = "/home/asck8s02/Documents/dotnet/redisGetJson/data.json";
 	private static List<string> keys;
@@ -27,20 +27,83 @@ class Program
     {
 		var data = LoadKeysFromJson(KeyFilePath);
 		keys = new List<string>(data.Keys);
-        var tasks = new List<Task>();
-		
-		redisConnection = await ConnectionMultiplexer.ConnectAsync(RedisConnectionString);
 
 		
 		
+
+		// 獲取命令列參數
+        string[] arguments = Environment.GetCommandLineArgs();
+
+        for (int i = 1; i < arguments.Length; i++) // Skip the first element which is the executable path
+        {
+            switch (arguments[i])
+            {
+                case "-set":
+                    if (i + 1 < arguments.Length && int.TryParse(arguments[i + 1], out int setClients))
+                    {
+                        WriteClientCount = setClients;
+                        i++; // Skip the next element since it's the value for the current option
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid value for -s option");
+                    }
+                    break;
+
+                case "-get":
+                    if (i + 1 < arguments.Length && int.TryParse(arguments[i + 1], out int getClients))
+                    {
+                        ReadClientCount = getClients;
+                        i++; // Skip the next element since it's the value for the current option
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid value for -g option");
+                    }
+                    break;
+
+                case "-d":
+                    if (i + 1 < arguments.Length && int.TryParse(arguments[i + 1], out int dataSize))
+                    {
+                        DataPointSize = dataSize/2;
+                        i++; // Skip the next element since it's the value for the current option
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid value for -d option");
+                    }
+                    break;
+
+                case "-P":
+                    if (i + 1 < arguments.Length && int.TryParse(arguments[i + 1], out int Pipeline ))
+                    {
+                        DataPointsPerSecond = Pipeline;
+                        i++; // Skip the next element since it's the value for the current option
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid value for -d option");
+                    }
+                    break;
+
+                default:
+                    Console.WriteLine($"Unknown option: {arguments[i]}");
+                    break;
+            }
+        }
+		 
+         StartTesting().Wait();
+
+
+        Console.WriteLine("Analysis completed");
 		
-		
-		
-		
-		
-		
-		
-		
+    }
+
+    private static async Task StartTesting()
+    {
+        redisConnection = await ConnectionMultiplexer.ConnectAsync(RedisConnectionString);
+        var tasks = new List<Task>();
+        AllClientCount = WriteClientCount + ReadClientCount;
 		Stopwatch stopwatch = Stopwatch.StartNew();	
         for (int i = 0; i < WriteClientCount; i++)
         {
@@ -55,16 +118,18 @@ class Program
 		stopwatch.Stop();
 		TimeSpan ts = stopwatch.Elapsed;
 
+        Console.WriteLine($"{AllClientCount * DataPointsPerSecond} requests completed in {ts.TotalMilliseconds} ms");
+        
+		Console.WriteLine($"{WriteClientCount * DataPointsPerSecond} set requests , {ReadClientCount * DataPointsPerSecond} get requests");
 
-		Console.WriteLine($"{WriteClientCount * DataPointsPerSecond} set + {ReadClientCount * DataPointsPerSecond} get requests completed in {ts.TotalMilliseconds} ms");
 		Console.WriteLine($"{AllClientCount}  parallel clients include: {WriteClientCount} set clients, {ReadClientCount} get clients");
-		// Console.WriteLine($"{WriteClientCount} set clients");
-		// Console.WriteLine($"{ReadClientCount} get clients");
+
 		Console.WriteLine($"{DataPointSize*2} bytes payload" );
-		// Console.WriteLine("Total write request: "+ WriteClientCount*DataPointsPerSecond);
-		// Console.WriteLine("Total read request: "+ ReadClientCount*DataPointsPerSecond);
+
 
     }
+
+
 
     private static async Task SimulateWriteClient(int clientId)
     {
