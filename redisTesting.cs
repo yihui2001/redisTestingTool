@@ -18,11 +18,14 @@ class Program
     private static  int DataPointSize; // char length 1ch = 2 byte
 	private static readonly object counterLock = new object();
 	private static readonly string KeyFilePath = "/home/asck8s02/Documents/dotnet/redisGetJson/data.json";
+	private static readonly int cycle = 100;
 	private static List<string> keys;
-	
 	private static IDatabase db;
-	
 	private static ConnectionMultiplexer redisConnection;
+	
+	private static double totalTime = 0;
+	
+	
     static async Task Main(string[] args)
     {
 		var data = LoadKeysFromJson(KeyFilePath);
@@ -31,7 +34,7 @@ class Program
 		
 		
 
-		// 獲取命令列參數
+		
         string[] arguments = Environment.GetCommandLineArgs();
 
         for (int i = 1; i < arguments.Length; i++) // Skip the first element which is the executable path
@@ -92,10 +95,10 @@ class Program
             }
         }
 		 
-         StartTesting().Wait();
+        await StartTesting();
 
 
-        Console.WriteLine("Analysis completed");
+   
 		
     }
 
@@ -104,22 +107,67 @@ class Program
         redisConnection = await ConnectionMultiplexer.ConnectAsync(RedisConnectionString);
         var tasks = new List<Task>();
         AllClientCount = WriteClientCount + ReadClientCount;
-		Stopwatch stopwatch = Stopwatch.StartNew();	
-        for (int i = 0; i < WriteClientCount; i++)
-        {
-            tasks.Add(Task.Run(() => SimulateWriteClient(i)));
-        }
-		for (int i = 0; i < ReadClientCount; i++){
+		int runtime = cycle;
+		List<double> times = new List<double>(); 
+		while(runtime>0){
+			Stopwatch stopwatch = Stopwatch.StartNew();	
+			for (int i = 0; i < WriteClientCount; i++)
+			{
+				tasks.Add(Task.Run(() => SimulateWriteClient(i)));
+			}
+			for (int i = 0; i < ReadClientCount; i++){
+				
+				tasks.Add(Task.Run(() => SimulateReadClient(i)));
+			}
+			await Task.WhenAll(tasks);
 			
-			tasks.Add(Task.Run(() => SimulateReadClient(i)));
-		}
-        await Task.WhenAll(tasks);
-		
-		stopwatch.Stop();
-		TimeSpan ts = stopwatch.Elapsed;
+			stopwatch.Stop();
+			TimeSpan ts = stopwatch.Elapsed;
+			
+			
+			double currentTime = ts.TotalMilliseconds;
+			int delayTime = 1000 - (int)currentTime;
+			if(delayTime<0){
+				delayTime = 0;
+			}
+			
+			await Task.Delay(delayTime);
+			
+			
+			times.Add(currentTime); 
+			totalTime += currentTime;
 
-        Console.WriteLine($"{AllClientCount * DataPointsPerSecond} requests completed in {ts.TotalMilliseconds} ms");
-        
+			
+			
+			runtime--;
+		}
+		
+		double result = totalTime/cycle;
+
+        //Console.WriteLine($"{AllClientCount * DataPointsPerSecond} requests completed in {result} ms");
+ 
+		double avg = totalTime / times.Count;
+
+
+		times.Sort();
+		double p50 = times.Count % 2 == 0 ? 
+					 (times[times.Count / 2 - 1] + times[times.Count / 2]) / 2.0 :
+					 times[times.Count / 2];
+
+		double min = times.Min();
+		double max = times.Max();
+
+	
+		double p95 = times[(int)(times.Count * 0.95) - 1]; 
+		double p99 = times[(int)(times.Count * 0.99) - 1]; 
+
+		Console.WriteLine($"Average: {avg} ms");
+		Console.WriteLine($"Min: {min} ms");
+		Console.WriteLine($"P50 (Median): {p50} ms");
+		Console.WriteLine($"P95: {p95} ms");
+		Console.WriteLine($"P99: {p99} ms");
+		Console.WriteLine($"Max: {max} ms");
+		
 		Console.WriteLine($"{WriteClientCount * DataPointsPerSecond} set requests , {ReadClientCount * DataPointsPerSecond} get requests");
 
 		Console.WriteLine($"{AllClientCount}  parallel clients include: {WriteClientCount} set clients, {ReadClientCount} get clients");
@@ -138,18 +186,18 @@ class Program
 		// save data to dic in order to save in json file
 		
             var dataPoints = GenerateDataPoints(DataPointsPerSecond, DataPointSize);
-            var tasks = new List<Task>();
+            var Writetasks = new List<Task>();
 			
 
             foreach (var dataPoint in dataPoints)
             {	
-				string key = String.Format("{0:MM/dd-HH:mm:ss:ffffff}",DateTime.Now);  
-                tasks.Add(db.StringSetAsync(key,dataPoint,expiry)); // set expiry
+				string key = String.Format("{0:MM-dd_HH-mm-ss-ffffff}",DateTime.Now);  
+                Writetasks.Add(db.StringSetAsync(key,dataPoint,expiry)); // set expiry
 				//Console.WriteLine(key);
 			
             }
 		
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(Writetasks);
 			        
     }
 	private static async Task SimulateReadClient(int clientId)
@@ -158,13 +206,23 @@ class Program
 		var db = redisConnection.GetDatabase();
         var random = new Random();
 		var times = DataPointsPerSecond;
+		var Readtasks = new List<Task>();
         while (times>0)
         {
 			
 			times--;
             var key = keys[random.Next(keys.Count)];
-            var value = await db.StringGetAsync(key);
+            // var value = await db.StringGetAsync(key);
 
+
+			Readtasks.Add(Task.Run(async () =>
+			{
+				var value = await db.StringGetAsync(key);
+			   
+				// Console.WriteLine($"Retrieved value for key {key}: {value}");
+			}));
+			await Task.WhenAll(Readtasks);
+			
 			// TODO: if value is null, go mongo db 
 					
             // Console.WriteLine($"Key: {key}, Value: {value}");
