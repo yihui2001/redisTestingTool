@@ -9,7 +9,8 @@ using System.Text;
 
 class Program
 {
-    private static readonly string RedisConnectionString = "10.43.5.237";
+	// fill in your connect info 
+    private static readonly string RedisConnectionString = "";
 	
     private static  int AllClientCount;
 	private static  int WriteClientCount;
@@ -17,7 +18,7 @@ class Program
     private static  int DataPointsPerSecond;
     private static  int DataPointSize; // char length 1ch = 2 byte
 	private static readonly object counterLock = new object();
-	private static readonly string KeyFilePath = "/home/asck8s02/Documents/dotnet/redisGetJson/data.json";
+	private static readonly string KeyFilePath = "your-path";
 	private static readonly int cycle = 100;
 	private static List<string> keys;
 	private static IDatabase db;
@@ -31,10 +32,6 @@ class Program
 		var data = LoadKeysFromJson(KeyFilePath);
 		keys = new List<string>(data.Keys);
 
-		
-		
-
-		
         string[] arguments = Environment.GetCommandLineArgs();
 
         for (int i = 1; i < arguments.Length; i++) // Skip the first element which is the executable path
@@ -166,12 +163,9 @@ class Program
 		Console.WriteLine($"P50 (Median): {p50} ms");
 		Console.WriteLine($"P95: {p95} ms");
 		Console.WriteLine($"P99: {p99} ms");
-		Console.WriteLine($"Max: {max} ms");
-		
+		Console.WriteLine($"Max: {max} ms");		
 		Console.WriteLine($"{WriteClientCount * DataPointsPerSecond} set requests , {ReadClientCount * DataPointsPerSecond} get requests");
-
 		Console.WriteLine($"{AllClientCount}  parallel clients include: {WriteClientCount} set clients, {ReadClientCount} get clients");
-
 		Console.WriteLine($"{DataPointSize*2} bytes payload" );
 
 
@@ -218,7 +212,6 @@ class Program
 			Readtasks.Add(Task.Run(async () =>
 			{
 				var value = await db.StringGetAsync(key);
-			   
 				// Console.WriteLine($"Retrieved value for key {key}: {value}");
 			}));
 			await Task.WhenAll(Readtasks);
