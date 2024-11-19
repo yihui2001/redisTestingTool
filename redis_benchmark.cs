@@ -12,24 +12,20 @@ class Program
 	// fill in your connect info 
     private static readonly string RedisConnectionString = "";
 	
-    private static  int AllClientCount;
+
     private static  int WriteClientCount;
     private static  int ReadClientCount;
     private static  int DataPointsPerSecond;
     private static  int DataPointSize; // char length 1ch = 2 byte
-    private static readonly object counterLock = new object();
     private static readonly string KeyFilePath = "your-path";
     private static readonly int cycle = 100;
-    private static List<string> keys;
-    private static IDatabase db;
     private static ConnectionMultiplexer redisConnection;	
-    private static double totalTime = 0;
+
 	
 	
     static async Task Main(string[] args)
     {
-		var data = LoadKeysFromJson(KeyFilePath);
-		keys = new List<string>(data.Keys);
+		
 
 		string hostname = null;
 		string port = null;
@@ -158,9 +154,7 @@ class Program
 					
             }
         }
-		 
 
-		
 		if(port==null){
 			RedisConnectionString = $"{hostname}";
 		}
@@ -169,12 +163,8 @@ class Program
 			RedisConnectionString = $"{hostname}:{port}";
 		}
 		
-
-		
         await StartTesting();
 
-
-   
 		
     }
 
@@ -190,12 +180,12 @@ class Program
 			Console.WriteLine("Connect error");
 			throw;
 		}
-		
-		//Console.WriteLine("Start test");
+
 		
         var tasks = new List<Task>();
-        AllClientCount = WriteClientCount + ReadClientCount;
+        int AllClientCount = WriteClientCount + ReadClientCount;
 		int runtime = cycle;
+        double totalTime = 0;
 		List<double> times = new List<double>(); 
 		while(runtime>0){
 			Stopwatch stopwatch = Stopwatch.StartNew();	
@@ -262,7 +252,7 @@ class Program
 
     private static async Task SimulateWriteClient(int clientId)
     {
-        var db = redisConnection.GetDatabase();
+        IDatabase db = redisConnection.GetDatabase();
 		var expiry = TimeSpan.FromDays(1); // Set expiration day to 1 day
 		// save data to dic in order to save in json file
 		
@@ -284,7 +274,9 @@ class Program
 	private static async Task SimulateReadClient(int clientId)
     {
 		
-		var db = redisConnection.GetDatabase();
+		IDatabase db = redisConnection.GetDatabase();
+        var data = LoadKeysFromJson(KeyFilePath);
+		List<string> keys = new List<string>(data.Keys);
         var random = new Random();
 		var times = DataPointsPerSecond;
 		var Readtasks = new List<Task>();
@@ -302,10 +294,6 @@ class Program
 				// Console.WriteLine($"Retrieved value for key {key}: {value}");
 			}));
 			await Task.WhenAll(Readtasks);
-			
-			// TODO: if value is null, go mongo db 
-					
-            // Console.WriteLine($"Key: {key}, Value: {value}");
 
         }
     }
