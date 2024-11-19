@@ -9,16 +9,17 @@ using System.Text;
 
 class Program
 {
-    private static readonly string RedisConnectionString = "10.43.5.237";
+    private static string RedisConnectionString ;
 	
     private static  int AllClientCount;
-	private static  int WriteClientCount;
-	private static  int ReadClientCount;
-    private static  int DataPointsPerSecond;
-    private static  int DataPointSize; // char length 1ch = 2 byte
-	private static readonly object counterLock = new object();
-	private static readonly string KeyFilePath = "/home/asck8s02/Documents/dotnet/redisGetJson/data.json";
-	private static readonly int cycle = 100;
+	private static  int WriteClientCount=10;
+	private static  int ReadClientCount=10;
+    private static  int DataPointsPerSecond=1;
+    private static  int DataPointSize =200; // char length 1ch = 2 byte
+	//home/asck8s02/Documents/dotnet/redisGetJson/data.json
+	private static string KeyFilePath;
+	private static int cycle = 100;
+	private static  int intervalTime = 1000;
 	private static List<string> keys;
 	private static IDatabase db;
 	private static ConnectionMultiplexer redisConnection;
@@ -31,14 +32,15 @@ class Program
 		var data = LoadKeysFromJson(KeyFilePath);
 		keys = new List<string>(data.Keys);
 
-		
-		
-
-		
+		string hostname = null;
+		string port = null;
         string[] arguments = Environment.GetCommandLineArgs();
+
 
         for (int i = 1; i < arguments.Length; i++) // Skip the first element which is the executable path
         {
+			
+			
             switch (arguments[i])
             {
                 case "-set":
@@ -88,13 +90,88 @@ class Program
                         Console.WriteLine("Invalid value for -d option");
                     }
                     break;
+					
+					
+				case "-host":
+				 if (i + 1 < arguments.Length )
+                    {
+                        hostname =  arguments[i + 1];
+                        i++; // Skip the next element since it's the value for the current option
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid value for -h option");
+                    }
+                    break;
+				
+				case "-port":
+				 if (i + 1 < arguments.Length )
+                    {
+                        port = arguments[i + 1];
+                        i++; // Skip the next element since it's the value for the current option
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid value for -port option");
+                    }
+                    break; 
+					
+				case "-interval":
+                    if (i + 1 < arguments.Length && int.TryParse(arguments[i + 1], out int inteval ))
+                    {
+                        intervalTime = inteval;
+                        i++; // Skip the next element since it's the value for the current option
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid value for -t option");
+                    }
+                    break;
+					
+				case "-cycle":
+                    if (i + 1 < arguments.Length && int.TryParse(arguments[i + 1], out int c ))
+                    {
+                        cycle = c;
+                        i++; // Skip the next element since it's the value for the current option
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid value for -cycle option");
+                    }
+                    break;
+					
+				case "-file":
+					if (i + 1 < arguments.Length )
+                    {
+                        KeyFilePath = arguments[i + 1];
+                        i++; // Skip the next element since it's the value for the current option
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid value for -file option");
+                    }
+                    break; 
 
                 default:
                     Console.WriteLine($"Unknown option: {arguments[i]}");
                     break;
+					
+					
             }
         }
 		 
+
+		
+		if(port==null){
+			RedisConnectionString = $"{hostname}";
+		}
+		else{
+			
+			RedisConnectionString = $"{hostname}:{port}";
+		}
+		
+
+		
         await StartTesting();
 
 
@@ -104,7 +181,19 @@ class Program
 
     private static async Task StartTesting()
     {
-        redisConnection = await ConnectionMultiplexer.ConnectAsync(RedisConnectionString);
+		
+		try
+		{
+			 redisConnection = await ConnectionMultiplexer.ConnectAsync(RedisConnectionString);
+		}
+       catch (Exception e)
+		{
+			Console.WriteLine("Connect error");
+			throw;
+		}
+		
+		//Console.WriteLine("Start test");
+		
         var tasks = new List<Task>();
         AllClientCount = WriteClientCount + ReadClientCount;
 		int runtime = cycle;
@@ -126,7 +215,7 @@ class Program
 			
 			
 			double currentTime = ts.TotalMilliseconds;
-			int delayTime = 1000 - (int)currentTime;
+			int delayTime = intervalTime - (int)currentTime;
 			if(delayTime<0){
 				delayTime = 0;
 			}
@@ -137,14 +226,12 @@ class Program
 			times.Add(currentTime); 
 			totalTime += currentTime;
 
-			
+			//Console.WriteLine(runtime);
 			
 			runtime--;
 		}
 		
 		double result = totalTime/cycle;
-
-        //Console.WriteLine($"{AllClientCount * DataPointsPerSecond} requests completed in {result} ms");
  
 		double avg = totalTime / times.Count;
 
