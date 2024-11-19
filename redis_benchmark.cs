@@ -9,22 +9,21 @@ using System.Text;
 
 class Program
 {
-    private static string RedisConnectionString ;
+	// fill in your connect info 
+    private static readonly string RedisConnectionString = "";
 	
     private static  int AllClientCount;
-	private static  int WriteClientCount=10;
-	private static  int ReadClientCount=10;
-    private static  int DataPointsPerSecond=1;
-    private static  int DataPointSize =200; // char length 1ch = 2 byte
-	//home/asck8s02/Documents/dotnet/redisGetJson/data.json
-	private static string KeyFilePath;
-	private static int cycle = 100;
-	private static  int intervalTime = 1000;
-	private static List<string> keys;
-	private static IDatabase db;
-	private static ConnectionMultiplexer redisConnection;
-	
-	private static double totalTime = 0;
+    private static  int WriteClientCount;
+    private static  int ReadClientCount;
+    private static  int DataPointsPerSecond;
+    private static  int DataPointSize; // char length 1ch = 2 byte
+    private static readonly object counterLock = new object();
+    private static readonly string KeyFilePath = "your-path";
+    private static readonly int cycle = 100;
+    private static List<string> keys;
+    private static IDatabase db;
+    private static ConnectionMultiplexer redisConnection;	
+    private static double totalTime = 0;
 	
 	
     static async Task Main(string[] args)
@@ -253,18 +252,13 @@ class Program
 		Console.WriteLine($"P50 (Median): {p50} ms");
 		Console.WriteLine($"P95: {p95} ms");
 		Console.WriteLine($"P99: {p99} ms");
-		Console.WriteLine($"Max: {max} ms");
-		
+		Console.WriteLine($"Max: {max} ms");		
 		Console.WriteLine($"{WriteClientCount * DataPointsPerSecond} set requests , {ReadClientCount * DataPointsPerSecond} get requests");
-
 		Console.WriteLine($"{AllClientCount}  parallel clients include: {WriteClientCount} set clients, {ReadClientCount} get clients");
-
 		Console.WriteLine($"{DataPointSize*2} bytes payload" );
 
 
     }
-
-
 
     private static async Task SimulateWriteClient(int clientId)
     {
@@ -305,7 +299,6 @@ class Program
 			Readtasks.Add(Task.Run(async () =>
 			{
 				var value = await db.StringGetAsync(key);
-			   
 				// Console.WriteLine($"Retrieved value for key {key}: {value}");
 			}));
 			await Task.WhenAll(Readtasks);
