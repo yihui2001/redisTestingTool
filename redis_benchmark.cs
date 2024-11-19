@@ -13,18 +13,17 @@ class Program
     private static readonly string RedisConnectionString = "";
 	
     private static  int AllClientCount;
-	private static  int WriteClientCount;
-	private static  int ReadClientCount;
+    private static  int WriteClientCount;
+    private static  int ReadClientCount;
     private static  int DataPointsPerSecond;
     private static  int DataPointSize; // char length 1ch = 2 byte
-	private static readonly object counterLock = new object();
-	private static readonly string KeyFilePath = "your-path";
-	private static readonly int cycle = 100;
-	private static List<string> keys;
-	private static IDatabase db;
-	private static ConnectionMultiplexer redisConnection;
-	
-	private static double totalTime = 0;
+    private static readonly object counterLock = new object();
+    private static readonly string KeyFilePath = "your-path";
+    private static readonly int cycle = 100;
+    private static List<string> keys;
+    private static IDatabase db;
+    private static ConnectionMultiplexer redisConnection;	
+    private static double totalTime = 0;
 	
 	
     static async Task Main(string[] args)
