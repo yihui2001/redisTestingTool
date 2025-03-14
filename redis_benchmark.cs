@@ -22,20 +22,12 @@ class Program
     private static ConnectionMultiplexer redisConnection;	
 
 	
-	
     static async Task Main(string[] args)
     {
-		
-
-	string hostname = null;
-	string port = null;
-    string[] arguments = Environment.GetCommandLineArgs();
-
+	string[] arguments = Environment.GetCommandLineArgs();
 
         for (int i = 1; i < arguments.Length; i++) // Skip the first element which is the executable path
         {
-			
-			
             switch (arguments[i])
             {
                 case "-set":
@@ -85,85 +77,15 @@ class Program
                         Console.WriteLine("Invalid value for -d option");
                     }
                     break;
-					
-					
-				case "-host":
-		 			if (i + 1 < arguments.Length )
-                    {
-                        hostname =  arguments[i + 1];
-                        i++; // Skip the next element since it's the value for the current option
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid value for -h option");
-                    }
-                    break;
-				
-				case "-port":
-				 if (i + 1 < arguments.Length )
-                    {
-                        port = arguments[i + 1];
-                        i++; // Skip the next element since it's the value for the current option
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid value for -port option");
-                    }
-                    break; 
-					
-				case "-interval":
-                    if (i + 1 < arguments.Length && int.TryParse(arguments[i + 1], out int inteval ))
-                    {
-                        intervalTime = inteval;
-                        i++; // Skip the next element since it's the value for the current option
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid value for -t option");
-                    }
-                    break;
-					
-				case "-cycle":
-                    if (i + 1 < arguments.Length && int.TryParse(arguments[i + 1], out int c ))
-                    {
-                        cycle = c;
-                        i++; // Skip the next element since it's the value for the current option
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid value for -cycle option");
-                    }
-                    break;
-					
-				case "-file":
-					if (i + 1 < arguments.Length )
-                    {
-                        KeyFilePath = arguments[i + 1];
-                        i++; // Skip the next element since it's the value for the current option
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid value for -file option");
-                    }
-                    break; 
 
                 default:
                     Console.WriteLine($"Unknown option: {arguments[i]}");
                     break;
-					
-					
             }
         }
+		 
+        await StartTesting();	
 
-		if(port==null){
-			RedisConnectionString = $"{hostname}";
-		}
-		else{
-			
-			RedisConnectionString = $"{hostname}:{port}";
-		}
-		
-        await StartTesting();
 
 		
     }
