@@ -29,7 +29,7 @@ class Program
 
 	string hostname = null;
 	string port = null;
-        string[] arguments = Environment.GetCommandLineArgs();
+    string[] arguments = Environment.GetCommandLineArgs();
 
 
         for (int i = 1; i < arguments.Length; i++) // Skip the first element which is the executable path
