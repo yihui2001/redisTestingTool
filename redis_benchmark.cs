@@ -88,7 +88,7 @@ class Program
 					
 					
 				case "-host":
-				 if (i + 1 < arguments.Length )
+		 			if (i + 1 < arguments.Length )
                     {
                         hostname =  arguments[i + 1];
                         i++; // Skip the next element since it's the value for the current option
