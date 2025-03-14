@@ -8,7 +8,7 @@ However, in real-world usage scenarios, it is often necessary to simulate mixed 
 To address this need, redisTestingTool provides a solution that simulates multiple clients interacting with a Redis database for both read and write operations.
 Based on user-provided parameters, the tool launches a specified number of read and write clients and performs Redis database operations, making the performance testing process more representative of actual application scenarios.
 
-###  安裝與執行
+### Execution
 1. Restore .NET project dependencies:
 `dotnet restore`
 
