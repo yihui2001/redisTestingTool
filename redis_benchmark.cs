@@ -27,8 +27,8 @@ class Program
     {
 		
 
-		string hostname = null;
-		string port = null;
+	string hostname = null;
+	string port = null;
         string[] arguments = Environment.GetCommandLineArgs();
 
 
