@@ -40,6 +40,24 @@ dotnet build
 dotnet run -set <number_of_write_clients> -get <number_of_read_clients> -d <data_size_per_entry> -P <parallel_data_per_second>
 
 ```
+### Use Case
+1. Read-heavy workload
+  - Scenario: Read-heavy workload
+  - Command:
+     `dotnet run -set 50 -get 1000 -d 1000 -P 5`
+    
+2. Heavy write workload with minimal reads
+  - Scenario: Simulate a high-write workload with 1000 write clients, each writing 50 data entries per second, with each entry 1 KB in size, while only 10 clients perform read operations.
+  - Command:
+     `dotnet run -set 1000 -get 10 -d 1000 -P 50`
+
+3.  Balanced read/write scenario
+  - Scenario: Push the system to its limits by simulating 5000 write clients, each writing 100 data entries per second, with each entry 2 KB in size, while 5000 clients read concurrently.
+  - Command:
+     `dotnet run -set 5000 -get 5000 -d 2000 -P 100`
+    
+    
+
 
 #### Parameter Description
 `-set`: Specifies the number of write clients. Enter an integer value.
