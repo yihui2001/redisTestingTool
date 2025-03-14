@@ -61,9 +61,13 @@ dotnet run -set <number_of_write_clients> -get <number_of_read_clients> -d <data
 
 #### Parameter Description
 `-set`: Specifies the number of write clients. Enter an integer value.
+
 `-get`: Specifies the number of read clients. Enter an integer value.
+
 `-d`: Sets the data size per entry. Enter an integer value.
+
 `-P`: Sets the number of concurrent data operations per second. Enter an integer value.
+
 
 #### Note
 This is still a basic project, and the args handling has not been fully tested.
