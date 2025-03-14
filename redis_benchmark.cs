@@ -169,48 +169,47 @@ class Program
     }
 
     private static async Task StartTesting()
-    {
-		
-		try
-		{
-			 redisConnection = await ConnectionMultiplexer.ConnectAsync(RedisConnectionString);
-		}
+    {	
+	try
+	{
+		 redisConnection = await ConnectionMultiplexer.ConnectAsync(RedisConnectionString);
+	}
        catch (Exception e)
-		{
-			Console.WriteLine("Connect error");
-			throw;
-		}
+	{
+		Console.WriteLine("Connect error");
+		throw;
+	}
 
 		
         var tasks = new List<Task>();
         int AllClientCount = WriteClientCount + ReadClientCount;
-		int runtime = cycle;
+	int runtime = cycle;
         double totalTime = 0;
-		List<double> times = new List<double>(); 
-		while(runtime>0){
-			Stopwatch stopwatch = Stopwatch.StartNew();	
-			for (int i = 0; i < WriteClientCount; i++)
-			{
-				tasks.Add(Task.Run(() => SimulateWriteClient(i)));
-			}
-			for (int i = 0; i < ReadClientCount; i++){
-				
-				tasks.Add(Task.Run(() => SimulateReadClient(i)));
-			}
-			await Task.WhenAll(tasks);
+	List<double> times = new List<double>(); 
+	while(runtime>0){
+		Stopwatch stopwatch = Stopwatch.StartNew();	
+		for (int i = 0; i < WriteClientCount; i++)
+		{
+			tasks.Add(Task.Run(() => SimulateWriteClient(i)));
+		}
+		for (int i = 0; i < ReadClientCount; i++){
 			
-			stopwatch.Stop();
-			TimeSpan ts = stopwatch.Elapsed;
-			
-			
-			double currentTime = ts.TotalMilliseconds;
-			int delayTime = intervalTime - (int)currentTime;
-			if(delayTime<0){
-				delayTime = 0;
-			}
-			
-			await Task.Delay(delayTime);
-			
+			tasks.Add(Task.Run(() => SimulateReadClient(i)));
+		}
+		await Task.WhenAll(tasks);
+		
+		stopwatch.Stop();
+		TimeSpan ts = stopwatch.Elapsed;
+		
+		
+		double currentTime = ts.TotalMilliseconds;
+		int delayTime = intervalTime - (int)currentTime;
+		if(delayTime<0){
+			delayTime = 0;
+		}
+		
+		await Task.Delay(delayTime);
+		
 			
 			times.Add(currentTime); 
 			totalTime += currentTime;
@@ -250,27 +249,25 @@ class Program
 
     }
 
-    private static async Task SimulateWriteClient(int clientId)
-    {
-        IDatabase db = redisConnection.GetDatabase();
+	private static async Task SimulateWriteClient(int clientId)
+	{
+		IDatabase db = redisConnection.GetDatabase();
 		var expiry = TimeSpan.FromDays(1); // Set expiration day to 1 day
 		// save data to dic in order to save in json file
 		
-            var dataPoints = GenerateDataPoints(DataPointsPerSecond, DataPointSize);
-            var Writetasks = new List<Task>();
+	   	var dataPoints = GenerateDataPoints(DataPointsPerSecond, DataPointSize);
+		var Writetasks = new List<Task>();
 			
-
-            foreach (var dataPoint in dataPoints)
-            {	
-				string key = String.Format("{0:MM-dd_HH-mm-ss-ffffff}",DateTime.Now);  
-                Writetasks.Add(db.StringSetAsync(key,dataPoint,expiry)); // set expiry
-				//Console.WriteLine(key);
-			
-            }
+	
+		foreach (var dataPoint in dataPoints)
+	    {	
+			string key = String.Format("{0:MM-dd_HH-mm-ss-ffffff}",DateTime.Now);  
+			Writetasks.Add(db.StringSetAsync(key,dataPoint,expiry)); // set expiry		
+	    }
 		
-            await Task.WhenAll(Writetasks);
-			        
-    }
+	    await Task.WhenAll(Writetasks);
+				
+	}
 	private static async Task SimulateReadClient(int clientId)
     {
 		
@@ -284,7 +281,7 @@ class Program
         {
 			
 			times--;
-            var key = keys[random.Next(keys.Count)];
+        	var key = keys[random.Next(keys.Count)];
             // var value = await db.StringGetAsync(key);
 
 
