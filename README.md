@@ -56,7 +56,7 @@ dotnet run -set <number_of_write_clients> -get <number_of_read_clients> -d <data
   - Command:
      `dotnet run -set 5000 -get 5000 -d 2000 -P 100`
     
-    
+  The output will include Average, Min, Max, P50, P95, P99  
 
 
 #### Parameter Description
