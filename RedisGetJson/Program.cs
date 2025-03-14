@@ -20,18 +20,18 @@ class Program
         var server = connection.GetServer(RedisConnectionString, 6379);
         var keys = server.Keys(pattern: "*", pageSize: keySample).Take(keySample);
 
-		Console.WriteLine("Finish Fetching");
-		var keyList = new List<RedisKey>(keys);
+	Console.WriteLine("Finish Fetching");
+	var keyList = new List<RedisKey>(keys);
         var data = new Dictionary<string, string>();
 
 
 
-		foreach (var key in keys)
-		{
-			var value = await db.StringGetAsync(key);
-            data[key] = value;
-			Console.WriteLine(key);
-		}
+	foreach (var key in keys)
+	{
+		var value = await db.StringGetAsync(key);
+            	data[key] = value;
+		Console.WriteLine(key);
+	}
 
 
 
